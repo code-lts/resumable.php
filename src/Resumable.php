@@ -278,9 +278,10 @@ class Resumable
             $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
 
             if (count($files) > 0) {
-                if ($files[0] instanceof UploadedFileInterface) {
+                $firstFile = array_shift($files);
+                if ($firstFile instanceof UploadedFileInterface) {
                     $this->log('Moving chunk ' . $chunkNumber . ' for ' . $identifier);
-                    $files[0]->moveTo($chunkFile);
+                    $firstFile->moveTo($chunkFile);
                 } else {
                     $this->log('The file does not implement UploadedFileInterface');
                     return $this->response->withStatus(422);
