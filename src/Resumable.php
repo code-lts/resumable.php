@@ -129,6 +129,7 @@ class Resumable
             if (!empty($this->request->getUploadedFiles())) {
                 $this->extension        = $this->findExtension($this->resumableParam('filename'));
                 $this->originalFilename = $this->resumableParam('filename');
+                $this->log('Defined extension: ' . $this->extension . ' for: ' . $this->originalFilename);
             }
         }
     }
@@ -138,13 +139,16 @@ class Resumable
      */
     public function process()
     {
-        if (!empty($this->resumableParams())) {
-            if (!empty($this->request->getUploadedFiles())) {
+        if (! empty($this->resumableParams())) {
+            if (! empty($this->request->getUploadedFiles())) {
+                $this->log('Handling upload chunk');
                 return $this->handleChunk();
-            } else {
-                return $this->handleTestChunk();
             }
+
+            $this->log('Handling test chunk');
+            return $this->handleTestChunk();
         }
+        $this->log('Missing resumable params');
         return null;
     }
 
@@ -231,6 +235,11 @@ class Resumable
 
     /**
      * @return ResponseInterface
+     * @see https://github.com/23/resumable.js/blob/v1.1.0/README.md#handling-get-or-test-requests
+     * - If this request returns a 200 HTTP code, the chunks is assumed to have been completed.
+     * - If the request returns anything else, the chunk will be uploaded in the standard fashion.
+     * (It is recommended to return 204 No Content in these cases if possible
+     *                       to avoid unwarranted notices in browser consoles.)
      */
     public function handleTestChunk()
     {
@@ -238,15 +247,18 @@ class Resumable
         $filename    = $this->resumableParam($this->resumableOption['filename']);
         $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
 
-        if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
+        if (! $this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
             return $this->response->withStatus(204);
         } else {
-            return $this->response->withStatus(201);
+            return $this->response->withStatus(200);
         }
     }
 
     /**
      * @return ResponseInterface
+     * - 200: The chunk was accepted and correct. No need to re-upload.
+     * - 404, 415. 500, 501: The file for which the chunk was uploaded is not supported, cancel the entire upload.
+     * - Anything else: Something went wrong, but try reuploading the file.
      */
     public function handleChunk()
     {
@@ -262,15 +274,17 @@ class Resumable
             $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
             $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
 
+            $this->log('Moving chunk ' . $chunkNumber . ' for ' . $identifier);
             $file->moveTo($chunkFile);
         }
 
         if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
             $this->isUploadComplete = true;
             $this->createFileAndDeleteTmp($identifier, $filename);
+            $this->log('Upload of ' . $identifier . ' is complete');
         }
 
-        return $this->response->withStatus(201);
+        return $this->response->withStatus(200);
     }
 
     /**
@@ -294,6 +308,7 @@ class Resumable
         $this->extension = $this->findExtension($this->filepath);
 
         if ($this->createFileFromChunks($chunkFiles, $this->filepath) && $this->deleteTmpFolder) {
+            $this->log('Removing chunk dir ' . $chunkDir);
             $this->fileSystem->delete($chunkDir);
             $this->uploadComplete = true;
         }
