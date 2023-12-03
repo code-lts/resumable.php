@@ -1,5 +1,8 @@
 # PHP backend for resumable.js
 
+To use this project we recommend you to use [point cloud technology's fork](https://github.com/pointcloudtechnology/resumable.js) that is a maintained version of the original [resumable.js library](https://github.com/23/resumable.js/tree/master).
+
+
 ## Installation
 
 To install, use composer:
