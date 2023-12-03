@@ -216,7 +216,7 @@ class ResumableTest extends TestCase
         $this->assertEquals($resumableParams, $this->resumable->resumableParams());
     }
 
-    public function isFileUploadCompleteProvider(): array
+    public static function isFileUploadCompleteProvider(): array
     {
         return [
             ['mock.png', 'files', 20, 60, true],
