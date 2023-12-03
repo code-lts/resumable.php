@@ -241,7 +241,7 @@ class Resumable
         if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
             return $this->response->withStatus(204);
         } else {
-            return $this->response->withStatus(200);
+            return $this->response->withStatus(201);
         }
     }
 
@@ -270,7 +270,7 @@ class Resumable
             $this->createFileAndDeleteTmp($identifier, $filename);
         }
 
-        return $this->response->withStatus(200);
+        return $this->response->withStatus(201);
     }
 
     /**
