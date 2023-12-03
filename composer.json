@@ -19,9 +19,9 @@
         "nyholm/psr7": "^1.4"
     },
     "scripts": {
-        "phpunit": "./vendor/bin/phpunit",
-        "phpcs": "./vendor/bin/phpcs",
-        "phpcbf": "./vendor/bin/phpcbf"
+        "phpunit": "@php phpunit",
+        "phpcs": "@php phpcs",
+        "phpcbf": "@php phpcbf"
     },
     "license": "MIT",
     "autoload": {
@@ -32,6 +32,11 @@
     "autoload-dev": {
         "psr-4": {
             "ResumableJs\\Test\\": "test/src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
         }
     }
 }
