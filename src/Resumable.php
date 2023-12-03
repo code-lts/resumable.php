@@ -303,8 +303,8 @@ class Resumable
 
         if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
             $this->isUploadComplete = true;
-            $this->createFileAndDeleteTmp($identifier, $filename);
             $this->log('Upload of ' . $identifier . ' is complete');
+            $this->createFileAndDeleteTmp($identifier, $filename);
         }
 
         return $this->response->withStatus(201);
@@ -319,11 +319,12 @@ class Resumable
         $chunkFiles = $this->fileSystem->listKeys(
             $chunkDir
         )['keys'];
+
+        $finalFilename = $filename;
+
         // if the user has set a custom filename
         if (null !== $this->filename) {
             $finalFilename = $this->createSafeFilename($this->filename, $filename);
-        } else {
-            $finalFilename = $filename;
         }
 
         // replace filename reference by the final file
