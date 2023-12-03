@@ -248,9 +248,11 @@ class Resumable
         $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
 
         if (! $this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
-            return $this->response->withStatus(200);
+            // We do not have the chunk, please send it
+            return $this->response->withStatus(204);
         } else {
-            return $this->response->withStatus(201);
+            // We have the chunk, do not send it
+            return $this->response->withStatus(200);
         }
     }
 
