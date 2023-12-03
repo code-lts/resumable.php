@@ -11,7 +11,7 @@
         "php": "^7.1 || ^8.0",
         "psr/log": "^1.1",
         "psr/http-message": "^1.0",
-        "knplabs/gaufrette": "^0.10.0"
+        "knplabs/gaufrette": "^0.11.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^7 || ^8 || ^9",
