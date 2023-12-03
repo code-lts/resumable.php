@@ -69,7 +69,7 @@ class ResumableTest extends TestCase
                     'mock.png',
                     27000, // Size
                     0 // Error status
-                )
+                ),
                 ]
             );
 
@@ -158,7 +158,7 @@ class ResumableTest extends TestCase
                     'test/uploads/mock.png',
                     27000, // Size
                     0 // Error status
-                )
+                ),
                 ]
             );
 
@@ -273,7 +273,7 @@ class ResumableTest extends TestCase
             [
                 filesize('test/files/mock.png.0001'),
                 filesize('test/files/mock.png.0002'),
-                filesize('test/files/mock.png.0003')
+                filesize('test/files/mock.png.0003'),
             ]
         );
         $destFile      = 'test/files/5.png';

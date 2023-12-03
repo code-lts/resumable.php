@@ -78,7 +78,7 @@ class Resumable
         'filename' => 'filename',
         'chunkNumber' => 'chunkNumber',
         'chunkSize' => 'chunkSize',
-        'totalSize' => 'totalSize'
+        'totalSize' => 'totalSize',
     ];
 
     public const WITHOUT_EXTENSION = true;
