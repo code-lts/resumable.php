@@ -58,6 +58,8 @@ class ResumableTest extends TestCase
             'resumableRelativePath' => 'upload',
         ];
 
+        $uploadedFile = tempnam(sys_get_temp_dir(), 'resumable.js_mock.png');
+
         $this->request = $this->psr17Factory->createServerRequest(
             'POST',
             'http://example.com'
@@ -66,7 +68,7 @@ class ResumableTest extends TestCase
             ->withUploadedFiles(
                 [
                 new UploadedFile(
-                    'mock.png',
+                    $uploadedFile,
                     27000, // Size
                     0 // Error status
                 ),
@@ -84,6 +86,7 @@ class ResumableTest extends TestCase
             ->willReturn(true);
 
         $this->assertNotNull($this->resumable->process());
+        unlink($uploadedFile);
     }
 
     public function testProcessHandleTestChunk(): void
@@ -138,12 +141,14 @@ class ResumableTest extends TestCase
 
     public function testHandleChunk(): void
     {
-        $resumableParams = [
+        $uploadedFile     = tempnam(sys_get_temp_dir(), 'resumable.js_mock.png');
+        $uploadedFileName = basename($uploadedFile);
+        $resumableParams  = [
             'resumableChunkNumber' => 3,
             'resumableTotalChunks' => 600,
             'resumableChunkSize' => 200,
             'resumableIdentifier' => 'identifier',
-            'resumableFilename' => 'mock.png',
+            'resumableFilename' => $uploadedFileName,
             'resumableRelativePath' => 'upload',
         ];
 
@@ -155,14 +160,14 @@ class ResumableTest extends TestCase
             ->withUploadedFiles(
                 [
                 new UploadedFile(
-                    'test/uploads/mock.png',
+                    $uploadedFile,
                     27000, // Size
                     0 // Error status
                 ),
                 ]
             );
 
-        touch('test/uploads/mock.png');// Create the uploaded file
+        touch($uploadedFile);// Create the uploaded file
         $this->resumable                  = new Resumable($this->request, $this->response);
         $this->resumable->tempFolder      = 'test/tmp';
         $this->resumable->uploadFolder    = 'test/uploads';
@@ -184,9 +189,9 @@ class ResumableTest extends TestCase
             ),
             'The file should exist'
         );
-        $this->assertFileExists('test/uploads/mock.png');
-        unlink('test/tmp/identifier/mock.png.0003');
-        unlink('test/uploads/mock.png');
+        $this->assertFileDoesNotExist($uploadedFile);// It was moved
+        $this->assertTrue(unlink($this->resumable->tempFolder . '/identifier/' . $uploadedFileName . '.0003'));
+        $this->assertTrue(unlink($this->resumable->uploadFolder . '/' . $uploadedFileName));
     }
 
     public function testResumableParamsGetRequest(): void

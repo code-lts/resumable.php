@@ -280,11 +280,20 @@ class Resumable
                     $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
                     $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
                     $this->log('Moving chunk ' . $chunkNumber . ' for ' . $identifier);
-                    $this->fileSystem->write($chunkFile, '');// Create the file and the folder
-                    //TODO: implement the stream to send the data into another file system
-                    // Only works with the local FS
-                    // See: https://knplabs.github.io/Gaufrette/streaming.html
-                    $firstFile->moveTo($chunkFile);
+                    // On the server that received the upload
+                    $localTempFile = $firstFile->getStream()->getMetadata('uri');
+                    $ressource     = fopen($localTempFile, 'r');
+                    if ($ressource === false) {
+                        $this->log('Unable to open the stream for: ' . $localTempFile);
+                        return $this->response->withStatus(500);
+                    }
+
+                    $this->fileSystem->write(
+                        $chunkFile,
+                        $ressource
+                    );
+                    fclose($ressource);
+                    unlink($localTempFile);
                 } else {
                     $this->log('The file does not implement UploadedFileInterface');
                     return $this->response->withStatus(422);
