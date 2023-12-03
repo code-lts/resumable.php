@@ -332,7 +332,7 @@ class Resumable
 
         if ($this->createFileFromChunks($chunkFiles, $this->filepath)) {
             $this->log('Upload done for: ' . $identifier);
-            $this->uploadComplete = true;
+            $this->isUploadComplete = true;
         }
 
         if ($this->deleteTmpFolder === false) {
