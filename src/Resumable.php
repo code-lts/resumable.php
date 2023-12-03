@@ -10,6 +10,7 @@ use Gaufrette\StreamMode;
 use Psr\Log\LoggerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UploadedFileInterface;
 
 class Resumable
 {
@@ -264,8 +265,8 @@ class Resumable
      */
     public function handleChunk()
     {
-        /** @var \Psr\Http\Message\UploadedFileInterface $file */
-        $file        = $this->request->getUploadedFiles()[0];
+        /** @var UploadedFileInterface[] $files */
+        $files       = $this->request->getUploadedFiles();
         $identifier  = $this->resumableParam($this->resumableOption['identifier']);
         $filename    = $this->resumableParam($this->resumableOption['filename']);
         $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
@@ -276,8 +277,15 @@ class Resumable
             $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
             $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
 
-            $this->log('Moving chunk ' . $chunkNumber . ' for ' . $identifier);
-            $file->moveTo($chunkFile);
+            if (count($files) > 0) {
+                if ($files[0] instanceof UploadedFileInterface) {
+                    $this->log('Moving chunk ' . $chunkNumber . ' for ' . $identifier);
+                    $files[0]->moveTo($chunkFile);
+                } else {
+                    $this->log('The file does not implement UploadedFileInterface');
+                    return $this->response->withStatus(422);
+                }
+            }
         }
 
         if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
