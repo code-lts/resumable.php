@@ -330,11 +330,23 @@ class Resumable
         $this->filepath  = $this->uploadFolder . DIRECTORY_SEPARATOR . $finalFilename;
         $this->extension = $this->findExtension($this->filepath);
 
-        if ($this->createFileFromChunks($chunkFiles, $this->filepath) && $this->deleteTmpFolder) {
-            $this->log('Removing chunk dir ' . $chunkDir);
-            $this->fileSystem->delete($chunkDir);
+        if ($this->createFileFromChunks($chunkFiles, $this->filepath)) {
+            $this->log('Upload done for: ' . $identifier);
             $this->uploadComplete = true;
         }
+
+        if ($this->deleteTmpFolder === false) {
+            // Stop here
+            return;
+        }
+
+        foreach ($chunkFiles as $chunkFile) {
+            $this->log('Removing chunk file: ' . $chunkFile);
+            $this->fileSystem->delete($chunkFile);
+        }
+
+        $this->log('Removing chunk dir: ' . $chunkDir);
+        $this->fileSystem->delete($chunkDir);
     }
 
     /**
