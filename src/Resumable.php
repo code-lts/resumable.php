@@ -230,7 +230,7 @@ class Resumable
     {
         $identifier  = $this->resumableParam($this->resumableOption['identifier']);
         $filename    = $this->resumableParam($this->resumableOption['filename']);
-        $chunkNumber = $this->resumableParam($this->resumableOption['chunkNumber']);
+        $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
 
         if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
             return $this->response->withStatus(204);
@@ -248,9 +248,9 @@ class Resumable
         $file        = $this->request->getUploadedFiles()[0];
         $identifier  = $this->resumableParam($this->resumableOption['identifier']);
         $filename    = $this->resumableParam($this->resumableOption['filename']);
-        $chunkNumber = $this->resumableParam($this->resumableOption['chunkNumber']);
-        $chunkSize   = $this->resumableParam($this->resumableOption['chunkSize']);
-        $totalSize   = $this->resumableParam($this->resumableOption['totalSize']);
+        $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
+        $chunkSize   = (int) $this->resumableParam($this->resumableOption['chunkSize']);
+        $totalSize   = (int) $this->resumableParam($this->resumableOption['totalSize']);
 
         if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
             $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
