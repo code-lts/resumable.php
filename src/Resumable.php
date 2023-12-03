@@ -19,8 +19,10 @@ class Resumable
      */
     protected $debug = false;
 
+    /** @var string */
     public $tempFolder = 'tmp';
 
+    /** @var string */
     public $uploadFolder = 'test/files/uploads';
 
     /**
@@ -89,21 +91,25 @@ class Resumable
         ?LoggerInterface $logger = null,
         ?Filesystem $fileSystem = null
     ) {
-        $this->request    = $request;
-        $this->response   = $response;
-        $this->fileSystem = $fileSystem === null ? $this->getFileSystem() : $fileSystem;
+        $this->request  = $request;
+        $this->response = $response;
+        if ($fileSystem === null) {
+            $cwd = getcwd();
+            $cwd === false ? __DIR__ : $cwd;
+            $this->fileSystem = self::getLocalFileSystem($cwd);
+        } else {
+            $this->fileSystem = $fileSystem;
+        }
 
         $this->logger = $logger;
 
         $this->preProcess();
     }
 
-    protected function getFileSystem(): Filesystem
+    public static function getLocalFileSystem(string $baseDir): Filesystem
     {
-        $cwd = getcwd();
-        $cwd === false ? __DIR__ : $cwd;
         $adapter = new LocalFilesystemAdapter(
-            $cwd
+            $baseDir
         );
 
         return new Filesystem($adapter);
