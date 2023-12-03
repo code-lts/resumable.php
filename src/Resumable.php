@@ -346,7 +346,14 @@ class Resumable
         }
 
         $this->log('Removing chunk dir: ' . $chunkDir);
-        $this->fileSystem->delete($chunkDir);
+
+        // See: https://github.com/KnpLabs/Gaufrette/issues/524
+        if (method_exists($filesystem, 'getAdapter')) {
+            $filesystem->getAdapter()->delete($chunkDir);
+            return;
+        }
+
+        $filesystem->delete($chunkDir);
     }
 
     /**
