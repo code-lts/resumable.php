@@ -236,7 +236,7 @@ class Resumable
     /**
      * @return ResponseInterface
      * @see https://github.com/23/resumable.js/blob/v1.1.0/README.md#handling-get-or-test-requests
-     * - If this request returns a 200 HTTP code, the chunks is assumed to have been completed.
+     * - If this request returns a 200 or 201 HTTP code, the chunks is assumed to have been completed.
      * - If the request returns anything else, the chunk will be uploaded in the standard fashion.
      * (It is recommended to return 204 No Content in these cases if possible
      *                       to avoid unwarranted notices in browser consoles.)
@@ -248,9 +248,9 @@ class Resumable
         $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
 
         if (! $this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
-            return $this->response->withStatus(204);
-        } else {
             return $this->response->withStatus(200);
+        } else {
+            return $this->response->withStatus(201);
         }
     }
 
@@ -284,7 +284,7 @@ class Resumable
             $this->log('Upload of ' . $identifier . ' is complete');
         }
 
-        return $this->response->withStatus(200);
+        return $this->response->withStatus(201);
     }
 
     /**
