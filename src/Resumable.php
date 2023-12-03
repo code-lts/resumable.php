@@ -273,13 +273,12 @@ class Resumable
         $chunkSize   = (int) $this->resumableParam($this->resumableOption['chunkSize']);
         $totalSize   = (int) $this->resumableParam($this->resumableOption['totalSize']);
 
-        if (!$this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
-            $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
-            $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
-
+        if (! $this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
             if (count($files) > 0) {
                 $firstFile = array_shift($files);
                 if ($firstFile instanceof UploadedFileInterface) {
+                    $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
+                    $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
                     $this->log('Moving chunk ' . $chunkNumber . ' for ' . $identifier);
                     $firstFile->moveTo($chunkFile);
                 } else {
