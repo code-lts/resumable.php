@@ -315,7 +315,7 @@ class Resumable
      */
     private function createFileAndDeleteTmp(string $identifier, ?string $filename): void
     {
-        $chunkDir   = $this->tmpChunkDir($identifier);
+        $chunkDir   = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
         $chunkFiles = $this->fileSystem->listKeys(
             $chunkDir
         )['keys'];
