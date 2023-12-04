@@ -130,7 +130,13 @@ class Resumable
             if (!empty($this->request->getUploadedFiles())) {
                 $this->extension        = $this->findExtension($this->resumableParam('filename'));
                 $this->originalFilename = $this->resumableParam('filename');
-                $this->log('Defined extension: ' . $this->extension . ' for: ' . $this->originalFilename);
+                $this->log(
+                    'Defined extension',
+                    [
+                    'extension' => $this->extension,
+                    'originalFilename' => $this->originalFilename,
+                    ]
+                );
             }
         }
     }
@@ -279,12 +285,12 @@ class Resumable
                 if ($firstFile instanceof UploadedFileInterface) {
                     $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
                     $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
-                    $this->log('Moving chunk ' . $chunkNumber . ' for ' . $identifier);
+                    $this->log('Moving chunk', ['identifier' => $identifier, 'chunkNumber' => $chunkNumber]);
                     // On the server that received the upload
                     $localTempFile = $firstFile->getStream()->getMetadata('uri');
                     $ressource     = fopen($localTempFile, 'r');
                     if ($ressource === false) {
-                        $this->log('Unable to open the stream for: ' . $localTempFile);
+                        $this->log('Unable to open the stream', ['localTempFile' => $localTempFile]);
                         return $this->response->withStatus(500);
                     }
 
@@ -303,7 +309,7 @@ class Resumable
 
         if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
             $this->isUploadComplete = true;
-            $this->log('Upload of ' . $identifier . ' is complete');
+            $this->log('Upload is complete', ['identifier' => $identifier]);
             $this->createFileAndDeleteTmp($identifier, $filename);
         }
 
@@ -332,7 +338,7 @@ class Resumable
         $this->extension = $this->findExtension($this->filepath);
 
         if ($this->createFileFromChunks($chunkFiles, $this->filepath)) {
-            $this->log('Upload done for: ' . $identifier);
+            $this->log('Upload done', ['identifier' => $identifier]);
             $this->isUploadComplete = true;
         }
 
@@ -342,11 +348,11 @@ class Resumable
         }
 
         foreach ($chunkFiles as $chunkFile) {
-            $this->log('Removing chunk file: ' . $chunkFile);
+            $this->log('Removing chunk file', ['chunkFile' => $chunkFile]);
             $this->fileSystem->delete($chunkFile);
         }
 
-        $this->log('Removing chunk dir: ' . $chunkDir);
+        $this->log('Removing chunk dir', ['chunkDir' => $chunkDir]);
 
         // See: https://github.com/KnpLabs/Gaufrette/issues/524
         if (method_exists($this->fileSystem, 'getAdapter')) {
@@ -419,6 +425,11 @@ class Resumable
 
     public function createFileFromChunks(array $chunkFiles, string $destFile): bool
     {
+        if ($this->fileSystem->has($destFile)) {
+            $this->log('The final file already exists', ['finalFile' => $destFile]);
+            return false;
+        }
+
         $this->log('Beginning of create files from chunks');
 
         natsort($chunkFiles);
@@ -428,7 +439,7 @@ class Resumable
 
         foreach ($chunkFiles as $chunkFile) {
             $stream->write($this->fileSystem->read($chunkFile));
-            $this->log('Append ', ['chunk file' => $chunkFile]);
+            $this->log('Appending to file', ['chunkFile' => $chunkFile]);
         }
 
         $stream->flush();
