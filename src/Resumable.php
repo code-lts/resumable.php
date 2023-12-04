@@ -342,8 +342,8 @@ class Resumable
             $this->isUploadComplete = true;
         }
 
-        if ($this->deleteTmpFolder === false) {
-            // Stop here
+        if ($this->deleteTmpFolder === false || $this->isUploadComplete === false) {
+            // Stop here upload is not complete or the temp files should not be deleted
             return;
         }
 
