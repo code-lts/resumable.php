@@ -74,6 +74,7 @@ class Resumable
 
     protected $originalFilename;
 
+    /** @var bool */
     protected $isUploadComplete = false;
 
     protected $resumableOption = [
@@ -161,8 +162,6 @@ class Resumable
 
     /**
      * Get isUploadComplete
-     *
-     * @return bool
      */
     public function isUploadComplete(): bool
     {
@@ -331,18 +330,20 @@ class Resumable
         // if the user has set a custom filename
         if (null !== $this->filename) {
             $finalFilename = $this->createSafeFilename($this->filename, $filename);
+            $this->log('Created safe filename', ['finalFilename' => $finalFilename]);
         }
 
         // replace filename reference by the final file
         $this->filepath  = $this->uploadFolder . DIRECTORY_SEPARATOR . $finalFilename;
         $this->extension = $this->findExtension($this->filepath);
 
-        if ($this->createFileFromChunks($chunkFiles, $this->filepath)) {
-            $this->log('Upload done', ['identifier' => $identifier]);
-            $this->isUploadComplete = true;
+        $finalFileCreated = $this->createFileFromChunks($chunkFiles, $this->filepath);
+
+        if ($finalFileCreated) {
+            $this->log('File re-assembly is done', ['identifier' => $identifier]);
         }
 
-        if ($this->deleteTmpFolder === false || $this->isUploadComplete === false) {
+        if ($this->deleteTmpFolder === false || $finalFileCreated === false) {
             // Stop here upload is not complete or the temp files should not be deleted
             return;
         }
