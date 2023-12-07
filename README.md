@@ -31,12 +31,13 @@ $resumable->process();
 
 ```
 
-## More ##
-### Setting custom filename(s) ###
+## More
+
+### Setting custom filename(s)
 
 ```php
-// custom filename (extension from original file will be magically removed and re-appended)
-$originalName = $resumable->getOriginalFilename(Resumable::WITHOUT_EXTENSION); // will give you "original Name" instead of "original Name.png"
+// NOTE: this fork removed the getOriginalFilename() parameter to return without an extension.
+$originalName = $resumable->getOriginalFilename(); // will give you the original end-user file-name
 
 // do some slugification or whatever you need...
 $slugifiedname = my_slugify($originalName); // this is up to you, it as ported out of the library.

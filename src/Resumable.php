@@ -85,8 +85,6 @@ class Resumable
         'totalSize' => 'totalSize',
     ];
 
-    public const WITHOUT_EXTENSION = true;
-
     public function __construct(
         ServerRequestInterface $request,
         ResponseInterface $response,
@@ -129,8 +127,8 @@ class Resumable
     {
         if (!empty($this->resumableParams())) {
             if (!empty($this->request->getUploadedFiles())) {
-                $this->extension        = $this->findExtension($this->resumableParam('filename'));
                 $this->originalFilename = $this->resumableParam('filename');
+                $this->extension        = $this->findExtension($this->originalFilename);
                 $this->log(
                     'Defined extension',
                     [
@@ -195,12 +193,8 @@ class Resumable
      *
      * @return string Final filename
      */
-    public function getOriginalFilename(bool $withoutExtension = false): string
+    public function getOriginalFilename(): string
     {
-        if ($withoutExtension === static::WITHOUT_EXTENSION) {
-            return $this->removeExtension($this->originalFilename);
-        }
-
         return $this->originalFilename;
     }
 
@@ -233,10 +227,14 @@ class Resumable
      */
     private function createSafeFilename(string $filename, string $originalFilename): string
     {
-        $filename  = $this->removeExtension($filename);
-        $extension = $this->findExtension($originalFilename);
-
         return sprintf('%s.%s', $filename, $extension);
+    }
+
+    private function findExtension(string $filename): string
+    {
+        $parts = explode('.', basename($filename));
+
+        return end($parts);
     }
 
     /**
@@ -465,21 +463,6 @@ class Resumable
         if ($this->debug && $this->logger !== null) {
             $this->logger->debug($msg, $ctx);
         }
-    }
-
-    private function findExtension(string $filename): string
-    {
-        $parts = explode('.', basename($filename));
-
-        return end($parts);
-    }
-
-    private function removeExtension(string $filename): string
-    {
-        $ext = $this->findExtension($filename);
-
-        // remove extension from filename if any
-        return str_replace(sprintf('.%s', $ext), '', $filename);
     }
 
     public function setDebug(bool $debug): void
