@@ -134,8 +134,8 @@ class Resumable
                 $this->log(
                     'Defined extension',
                     [
-                    'extension' => $this->extension,
-                    'originalFilename' => $this->originalFilename,
+                        'extension' => $this->extension,
+                        'originalFilename' => $this->originalFilename,
                     ]
                 );
             }
@@ -476,8 +476,7 @@ class Resumable
 
     private function removeExtension(string $filename): string
     {
-        $parts = explode('.', basename($filename));
-        $ext   = end($parts); // get extension
+        $ext = $this->findExtension($filename);
 
         // remove extension from filename if any
         return str_replace(sprintf('.%s', $ext), '', $filename);
