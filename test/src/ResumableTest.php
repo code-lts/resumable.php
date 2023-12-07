@@ -141,7 +141,8 @@ class ResumableTest extends TestCase
 
     public function testHandleChunk(): void
     {
-        $uploadedFile     = tempnam(sys_get_temp_dir(), 'resumable.js_mock.png');
+        $uploadedFile = strtolower(tempnam(sys_get_temp_dir(), 'resumable.js-mock')) . '.png';
+        touch($uploadedFile);// Create the uploaded file
         $uploadedFileName = basename($uploadedFile);
         $resumableParams  = [
             'resumableChunkNumber' => 3,
@@ -167,7 +168,6 @@ class ResumableTest extends TestCase
                 ]
             );
 
-        touch($uploadedFile);// Create the uploaded file
         $this->resumable                  = new Resumable($this->request, $this->response);
         $this->resumable->tempFolder      = 'test/tmp';
         $this->resumable->uploadFolder    = 'test/uploads';
@@ -214,6 +214,56 @@ class ResumableTest extends TestCase
         $this->assertEquals('GET', $this->request->getMethod());
         $this->assertEquals($resumableParams, $this->request->getQueryParams());
         $this->assertEquals($resumableParams, $this->resumable->resumableParams());
+    }
+
+    public static function fileNameProvider(): array
+    {
+        return [
+            ['mock.png', 'mock.png'],
+            ['../unsafe-one-level.txt', 'unsafe-one-level.txt'],
+        ];
+    }
+
+    /**
+     * @dataProvider fileNameProvider
+     */
+    public function testResumableSanitizeFileName(string $filename, string $filenameSanitized): void
+    {
+        $resumableParams = [
+            'resumableChunkNumber' => 1,
+            'resumableTotalChunks' => 1,
+            'resumableChunkSize' => 200,
+            'resumableIdentifier' => 'identifier',
+            'resumableFilename' => $filename,
+            'resumableRelativePath' => 'upload',
+        ];
+
+        $uploadedFile = tempnam(sys_get_temp_dir(), 'resumable.js_sanitize');
+
+        $this->request = $this->psr17Factory->createServerRequest(
+            'POST',
+            'http://example.com'
+        )
+            ->withParsedBody($resumableParams)
+            ->withUploadedFiles(
+                [
+                new UploadedFile(
+                    $uploadedFile,
+                    27000, // Size
+                    0 // Error status
+                ),
+                ]
+            );
+
+        $this->resumable               = new Resumable($this->request, $this->response);
+        $this->resumable->uploadFolder = 'upld';
+
+        $this->assertNotNull($this->resumable->handleChunk());
+        unlink($uploadedFile);
+        $this->assertTrue($this->resumable->isUploadComplete());
+        $this->assertSame($filename, $this->resumable->getOriginalFilename());
+        $this->assertSame($filenameSanitized, $this->resumable->getFilename());
+        $this->assertSame('upld/' . $filenameSanitized, $this->resumable->getFilepath());
     }
 
     public static function isFileUploadCompleteProvider(): array

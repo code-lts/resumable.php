@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use OndrejVrto\FilenameSanitize\FilenameSanitize;
 
 class Resumable
 {
@@ -24,7 +25,7 @@ class Resumable
     public $tempFolder = 'tmp';
 
     /** @var string */
-    public $uploadFolder = 'test/files/uploads';
+    public $uploadFolder = 'uploads';
 
     /**
      * For testing purposes
@@ -70,8 +71,6 @@ class Resumable
 
     protected $filepath;
 
-    protected $extension;
-
     protected $originalFilename;
 
     /** @var bool */
@@ -102,8 +101,6 @@ class Resumable
         }
 
         $this->logger = $logger;
-
-        $this->preProcess();
     }
 
     public static function getLocalFileSystem(string $baseDir): Filesystem
@@ -118,26 +115,6 @@ class Resumable
     public function setResumableOption(array $resumableOption): void
     {
         $this->resumableOption = array_merge($this->resumableOption, $resumableOption);
-    }
-
-    /**
-     * sets original filename and extension, blah blah
-     */
-    public function preProcess(): void
-    {
-        if (!empty($this->resumableParams())) {
-            if (!empty($this->request->getUploadedFiles())) {
-                $this->originalFilename = $this->resumableParam('filename');
-                $this->extension        = $this->findExtension($this->originalFilename);
-                $this->log(
-                    'Defined extension',
-                    [
-                        'extension' => $this->extension,
-                        'originalFilename' => $this->originalFilename,
-                    ]
-                );
-            }
-        }
     }
 
     /**
@@ -209,32 +186,14 @@ class Resumable
     }
 
     /**
-     * Get final extension.
+     * Creates a safe name
      *
-     * @return string Final extension name
+     * @param string $name Original name
+     * @return string A safer name
      */
-    public function getExtension(): string
+    private function createSafeName(string $name): string
     {
-        return $this->extension;
-    }
-
-    /**
-     * Makes sure the original extension never gets overridden by user defined filename.
-     *
-     * @param string User defined filename
-     * @param string Original filename
-     * @return string Filename that always has an extension from the original file
-     */
-    private function createSafeFilename(string $filename, string $originalFilename): string
-    {
-        return sprintf('%s.%s', $filename, $extension);
-    }
-
-    private function findExtension(string $filename): string
-    {
-        $parts = explode('.', basename($filename));
-
-        return end($parts);
+        return FilenameSanitize::of($name)->get();
     }
 
     /**
@@ -323,17 +282,16 @@ class Resumable
             $chunkDir
         )['keys'];
 
-        $finalFilename = $filename;
+        $this->originalFilename = $filename;
 
         // if the user has set a custom filename
-        if (null !== $this->filename) {
-            $finalFilename = $this->createSafeFilename($this->filename, $filename);
-            $this->log('Created safe filename', ['finalFilename' => $finalFilename]);
+        if (null === $this->filename) {
+            $this->filename = $this->createSafeName($this->originalFilename);
+            $this->log('Created safe filename', ['finalFilename' => $this->filename]);
         }
 
         // replace filename reference by the final file
-        $this->filepath  = $this->uploadFolder . DIRECTORY_SEPARATOR . $finalFilename;
-        $this->extension = $this->findExtension($this->filepath);
+        $this->filepath = $this->uploadFolder . DIRECTORY_SEPARATOR . $this->filename;
 
         $finalFileCreated = $this->createFileFromChunks($chunkFiles, $this->filepath);
 
@@ -409,7 +367,7 @@ class Resumable
 
     public function tmpChunkDir(string $identifier): string
     {
-        return $this->tempFolder . DIRECTORY_SEPARATOR . $identifier;
+        return $this->tempFolder . DIRECTORY_SEPARATOR . $this->createSafeName($identifier);
     }
 
     /**

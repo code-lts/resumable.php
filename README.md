@@ -36,22 +36,26 @@ $resumable->process();
 ### Setting custom filename(s)
 
 ```php
-// NOTE: this fork removed the getOriginalFilename() parameter to return without an extension.
 $originalName = $resumable->getOriginalFilename(); // will give you the original end-user file-name
 
-// do some slugification or whatever you need...
-$slugifiedname = my_slugify($originalName); // this is up to you, it as ported out of the library.
-$resumable->setFilename($slugifiedname);
+$mySafeName = Security::sanitizeFileName($request->query('resumableFilename'));
+$resumable->setFilename($mySafeName);// Override the safe filename
 
 // process upload as normal
 $resumable->process();
 
 // you can also get file information after the upload is complete
 if (true === $resumable->isUploadComplete()) { // true when the final file has been uploaded and chunks reunited.
-    $extension = $resumable->getExtension();
     $filename = $resumable->getFilename();
 }
 ```
+
+## Removed features
+
+- `$resumable->getOriginalFilename()` does not have a parameter to return the name without the extension
+- `$resumable->getExtension()` implement the logic yourself
+- `preProcess()` no longer exists, it was not very useful
+- the default value of `uploadFolder` was `test/files/uploads` and is now `uploads`
 
 ## Testing
 
