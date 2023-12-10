@@ -16,65 +16,36 @@ use OndrejVrto\FilenameSanitize\FilenameSanitize;
 class Resumable
 {
     /**
-     * Debug is enabled
-     * @var bool
+     * Debug mode is enabled
      */
-    protected $debug = false;
+    protected bool $debug = false;
 
-    /** @var string */
-    public $tempFolder = 'tmp';
+    public string $tempFolder = 'tmp';
 
-    /** @var string */
-    public $uploadFolder = 'uploads';
+    public string $uploadFolder = 'uploads';
 
-    /**
-     * For testing purposes
-     *
-     * @var bool
-     * @internal Only used by tests, do not use it
-     */
-    public $deleteTmpFolder = true;
-
-    /**
-     * The request
-     *
-     * @var ServerRequestInterface
-     */
-    protected $request;
-
-    /**
-     * The response
-     *
-     * @var ResponseInterface
-     */
-    protected $response;
+    protected ServerRequestInterface $request;
+    protected ResponseInterface $response;
 
     protected $params;
 
-    protected $chunkFile;
+    protected string|null $chunkFile;
+
+    protected LoggerInterface|null $logger;
+
+    protected Filesystem|null $fileSystem;
 
     /**
-     * The logger
-     *
-     * @var LoggerInterface|null
+     * Override the filename that will be given by setting this to a value
+     * Before handing is done
      */
-    protected $logger;
+    protected string|null $filename = null;
 
-    /**
-     * The file system
-     *
-     * @var Filesystem
-     */
-    protected $fileSystem;
+    protected string $filepath = '';
 
-    protected $filename;
+    protected string $originalFilename = '';
 
-    protected $filepath;
-
-    protected $originalFilename;
-
-    /** @var bool */
-    protected $isUploadComplete = false;
+    protected bool $isUploadComplete = false;
 
     protected $resumableOption = [
         'identifier' => 'identifier',
@@ -117,10 +88,7 @@ class Resumable
         $this->resumableOption = array_merge($this->resumableOption, $resumableOption);
     }
 
-    /**
-     * @return ResponseInterface|null
-     */
-    public function process()
+    public function process(): ResponseInterface|null
     {
         if (! empty($this->resumableParams())) {
             if (! empty($this->request->getUploadedFiles())) {
@@ -197,35 +165,33 @@ class Resumable
     }
 
     /**
-     * @return ResponseInterface
      * @see https://github.com/23/resumable.js/blob/v1.1.0/README.md#handling-get-or-test-requests
      * - If this request returns a 200 or 201 HTTP code, the chunks is assumed to have been completed.
      * - If the request returns anything else, the chunk will be uploaded in the standard fashion.
      * (It is recommended to return 204 No Content in these cases if possible
      *                       to avoid unwarranted notices in browser consoles.)
      */
-    public function handleTestChunk()
+    public function handleTestChunk(): ResponseInterface
     {
         $identifier  = $this->resumableParam($this->resumableOption['identifier']);
         $filename    = $this->resumableParam($this->resumableOption['filename']);
         $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
 
-        if (! $this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
-            // We do not have the chunk, please send it
-            return $this->response->withStatus(204);
-        } else {
+        if ($this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
             // We have the chunk, do not send it
             return $this->response->withStatus(200);
         }
+
+        // We do not have the chunk, please send it
+        return $this->response->withStatus(204);
     }
 
     /**
-     * @return ResponseInterface
      * - 200: The chunk was accepted and correct. No need to re-upload.
      * - 404, 415. 500, 501: The file for which the chunk was uploaded is not supported, cancel the entire upload.
      * - Anything else: Something went wrong, but try reuploading the file.
      */
-    public function handleChunk()
+    public function handleChunk(): ResponseInterface
     {
         /** @var UploadedFileInterface[] $files */
         $files       = $this->request->getUploadedFiles();
@@ -240,7 +206,7 @@ class Resumable
                 $firstFile = array_shift($files);
                 if ($firstFile instanceof UploadedFileInterface) {
                     $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
-                    $chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
+                    $this->chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
                     $this->log('Moving chunk', ['identifier' => $identifier, 'chunkNumber' => $chunkNumber]);
                     // On the server that received the upload
                     $localTempFile = $firstFile->getStream()->getMetadata('uri');
@@ -251,7 +217,7 @@ class Resumable
                     }
 
                     $this->fileSystem->write(
-                        $chunkFile,
+                        $this->chunkFile,
                         $ressource
                     );
                     fclose($ressource);
@@ -299,8 +265,8 @@ class Resumable
             $this->log('File re-assembly is done', ['identifier' => $identifier]);
         }
 
-        if ($this->deleteTmpFolder === false || $finalFileCreated === false) {
-            // Stop here upload is not complete or the temp files should not be deleted
+        if ($finalFileCreated === false) {
+            // Stop here upload is not complete
             return;
         }
 
@@ -371,11 +337,9 @@ class Resumable
     }
 
     /**
-     * @param int|string $chunkNumber
-     *
      * @example mock-file.png.0001 For a filename "mock-file.png"
      */
-    public function tmpChunkFilename(string $filename, $chunkNumber): string
+    public function tmpChunkFilename(string $filename, int $chunkNumber): string
     {
         return $filename . '.' . str_pad((string) $chunkNumber, 4, '0', STR_PAD_LEFT);
     }
