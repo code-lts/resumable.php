@@ -82,9 +82,13 @@ class ResumableTest extends TestCase
                 ]
             );
 
+        $tempFolder = $this->resumable->tempFolder . '/' . $resumableParams['resumableIdentifier'] . '/';
         $this->refreshResumable();
         $this->assertNotNull($this->resumable->process());
-        unlink($uploadedFile);
+        $this->assertFileDoesNotExist($uploadedFile);// It got moved
+        $this->assertFileExists($tempFolder . 'example-file.png.0003');// It got moved
+        $this->assertTrue(unlink($tempFolder . 'example-file.png.0003'));
+        $this->assertTrue(rmdir($tempFolder . '/'));// It should be empty
     }
 
     public function testProcessHandleTestChunk(): void
@@ -263,14 +267,15 @@ class ResumableTest extends TestCase
         $this->refreshResumable();
         $this->resumable->uploadFolder = 'upld';
 
+        $this->assertFileExists($uploadedFile);
         $this->assertNotNull($this->resumable->handleChunk());
-        unlink($uploadedFile);
+        $this->assertFileDoesNotExist($uploadedFile);
         $this->assertTrue($this->resumable->isUploadComplete());
         $this->assertSame($filename, $this->resumable->getOriginalFilename());
         $this->assertSame($filenameSanitized, $this->resumable->getFilename());
-        $this->assertFileExists('upld/' . $filenameSanitized);
-        $this->assertSame('upld/' . $filenameSanitized, $this->resumable->getFilepath());
-        unlink('upld/' . $filenameSanitized);
+        $this->assertFileExists($this->resumable->uploadFolder . '/' . $filenameSanitized);
+        $this->assertSame($this->resumable->uploadFolder . '/' . $filenameSanitized, $this->resumable->getFilepath());
+        $this->assertTrue(unlink($this->resumable->uploadFolder . '/' . $filenameSanitized));
     }
 
     public static function isFileUploadCompleteProvider(): array
