@@ -56,6 +56,7 @@ if (true === $resumable->isUploadComplete()) { // true when the final file has b
 - `$resumable->getExtension()` implement the logic yourself
 - `preProcess()` no longer exists, it was not very useful
 - the default value of `uploadFolder` was `test/files/uploads` and is now `uploads`
+- Does not calculate the number of chunks, it uses the param `resumableTotalChunks`
 
 ## Testing
 

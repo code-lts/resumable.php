@@ -53,6 +53,7 @@ class Resumable
         'chunkNumber' => 'chunkNumber',
         'chunkSize' => 'chunkSize',
         'totalSize' => 'totalSize',
+        'totalChunks' => 'totalChunks',
     ];
 
     public function __construct(
@@ -197,9 +198,15 @@ class Resumable
         $files       = $this->request->getUploadedFiles();
         $identifier  = $this->resumableParam($this->resumableOption['identifier']);
         $filename    = $this->resumableParam($this->resumableOption['filename']);
+        $totalChunks = (int) $this->resumableParam($this->resumableOption['totalChunks']);
         $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
         $chunkSize   = (int) $this->resumableParam($this->resumableOption['chunkSize']);
         $totalSize   = (int) $this->resumableParam($this->resumableOption['totalSize']);
+
+        if ($chunkSize <= 0) {
+            $this->log('The chunk size is <= 0');
+            return $this->response->withStatus(422);
+        }
 
         if (! $this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
             if (count($files) > 0) {
@@ -229,7 +236,7 @@ class Resumable
             }
         }
 
-        if ($this->isFileUploadComplete($filename, $identifier, $chunkSize, $totalSize)) {
+        if ($this->isFileUploadComplete($filename, $identifier, $totalChunks)) {
             $this->isUploadComplete = true;
             $this->log('Upload is complete', ['identifier' => $identifier]);
             $this->createFileAndDeleteTmp($identifier, $filename);
@@ -309,14 +316,10 @@ class Resumable
         return [];
     }
 
-    public function isFileUploadComplete(string $filename, string $identifier, ?int $chunkSize, ?int $totalSize): bool
+    public function isFileUploadComplete(string $filename, string $identifier, int $numOfChunks): bool
     {
-        if ($chunkSize <= 0) {
-            return false;
-        }
-        $numOfChunks = intval($totalSize / $chunkSize) + ($totalSize % $chunkSize == 0 ? 0 : 1);
-        for ($i = 1; $i < $numOfChunks; $i++) {
-            if (!$this->isChunkUploaded($identifier, $filename, $i)) {
+        for ($i = 1; $i <= $numOfChunks; $i++) {
+            if (! $this->isChunkUploaded($identifier, $filename, $i)) {
                 return false;
             }
         }
