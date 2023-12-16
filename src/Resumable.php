@@ -344,7 +344,7 @@ class Resumable
      */
     public function tmpChunkFilename(string $filename, int $chunkNumber): string
     {
-        return $filename . '.' . str_pad((string) $chunkNumber, 4, '0', STR_PAD_LEFT);
+        return $this->createSafeName($filename) . '.' . str_pad((string) $chunkNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function createFileFromChunks(array $chunkFiles, string $destFile): bool
