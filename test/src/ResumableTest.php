@@ -35,14 +35,14 @@ class ResumableTest extends TestCase
     {
         $this->psr17Factory = new Psr17Factory();
 
-        $this->request = $this->psr17Factory->createServerRequest('GET', 'http://example.com');
+        $this->request  = $this->psr17Factory->createServerRequest('GET', 'http://example.com');
         $this->response = $this->psr17Factory->createResponse(200);
         $this->refreshResumable();
     }
 
     private function refreshResumable(): void
     {
-        $this->resumable = new Resumable($this->request, $this->response);
+        $this->resumable               = new Resumable($this->request, $this->response);
         $this->resumable->tempFolder   = 'test/tmp';
         $this->resumable->uploadFolder = 'test/uploads';
     }
@@ -200,7 +200,6 @@ class ResumableTest extends TestCase
         $this->assertFileDoesNotExist($uploadedFile);// It was moved
 
         $this->assertTrue(unlink($this->resumable->uploadFolder . '/' . $uploadedFileName));
-
     }
 
     public function testResumableParamsGetRequest(): void
@@ -322,9 +321,9 @@ class ResumableTest extends TestCase
 
     public function testTmpChunkFile(): void
     {
-        $filename        = 'example-file.png';
-        $chunkNumber     = 1;
-        $expected        = $filename . '.' . str_pad((string) $chunkNumber, 4, '0', STR_PAD_LEFT);
+        $filename    = 'example-file.png';
+        $chunkNumber = 1;
+        $expected    = $filename . '.' . str_pad((string) $chunkNumber, 4, '0', STR_PAD_LEFT);
         $this->assertEquals($expected, $this->resumable->tmpChunkFilename($filename, $chunkNumber));
     }
 

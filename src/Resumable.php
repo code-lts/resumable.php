@@ -198,10 +198,9 @@ class Resumable
         $files       = $this->request->getUploadedFiles();
         $identifier  = $this->resumableParam($this->resumableOption['identifier']);
         $filename    = $this->resumableParam($this->resumableOption['filename']);
-        $totalChunks = (int) $this->resumableParam($this->resumableOption['totalChunks']);
         $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
         $chunkSize   = (int) $this->resumableParam($this->resumableOption['chunkSize']);
-        $totalSize   = (int) $this->resumableParam($this->resumableOption['totalSize']);
+        $totalChunks = (int) $this->resumableParam($this->resumableOption['totalChunks']);
 
         if ($chunkSize <= 0) {
             $this->log('The chunk size is <= 0');
@@ -212,7 +211,7 @@ class Resumable
             if (count($files) > 0) {
                 $firstFile = array_shift($files);
                 if ($firstFile instanceof UploadedFileInterface) {
-                    $chunkDir  = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
+                    $chunkDir        = $this->tmpChunkDir($identifier) . DIRECTORY_SEPARATOR;
                     $this->chunkFile = $chunkDir . $this->tmpChunkFilename($filename, $chunkNumber);
                     $this->log('Moving chunk', ['identifier' => $identifier, 'chunkNumber' => $chunkNumber]);
                     // On the server that received the upload
@@ -316,10 +315,10 @@ class Resumable
         return [];
     }
 
-    public function isFileUploadComplete(string $filename, string $identifier, int $numOfChunks): bool
+    public function isFileUploadComplete(string $filename, string $identifier, int $totalChunks): bool
     {
-        for ($i = 1; $i <= $numOfChunks; $i++) {
-            if (! $this->isChunkUploaded($identifier, $filename, $i)) {
+        for ($i = 1; $i <= $totalChunks; $i++) {
+            if (!$this->isChunkUploaded($identifier, $filename, $i)) {
                 return false;
             }
         }
