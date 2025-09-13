@@ -171,14 +171,20 @@ class Resumable
      * - If the request returns anything else, the chunk will be uploaded in the standard fashion.
      * (It is recommended to return 204 No Content in these cases if possible
      *                       to avoid unwarranted notices in browser consoles.)
+     * - If this request returns a 422 HTTP code, one of the parameters is missing
      */
     public function handleTestChunk(): ResponseInterface
     {
         $identifier  = $this->resumableParam($this->resumableOption['identifier']);
         $filename    = $this->resumableParam($this->resumableOption['filename']);
-        $chunkNumber = (int) $this->resumableParam($this->resumableOption['chunkNumber']);
+        $chunkNumber = $this->resumableParam($this->resumableOption['chunkNumber']);
 
-        if ($this->isChunkUploaded($identifier, $filename, $chunkNumber)) {
+        // A parameter is missing
+        if ($identifier === null || $filename === null || $chunkNumber === null) {
+            return $this->response->withStatus(422);
+        }
+
+        if ($this->isChunkUploaded($identifier, $filename, (int) $chunkNumber)) {
             // We have the chunk, do not send it
             return $this->response->withStatus(200);
         }
