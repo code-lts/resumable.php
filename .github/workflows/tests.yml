@@ -9,27 +9,42 @@ jobs:
     test-php:
         name: Test on php ${{ matrix.php-version }} and ${{ matrix.os }}
         runs-on: ${{ matrix.os }}
+        continue-on-error: ${{ matrix.experimental }}
         strategy:
             fail-fast: false
             matrix:
-                php-version: ["8.1", "8.2", "8.3"]
+                php-version: ["8.1", "8.2", "8.3", "8.4"]
                 os: [ubuntu-latest]
+                experimental: [false]
+                coverage-required: [true]
+                composer-options: ['']
+                include:
+                    - { php-version: 'nightly', experimental: true, os: ubuntu-latest, composer-options: '--ignore-platform-reqs' }
         steps:
             - uses: actions/checkout@v4
             - name: Use php ${{ matrix.php-version }}
               uses: shivammathur/setup-php@v2
               with:
                   php-version: ${{ matrix.php-version }}
-            - name: Cache module
-              uses: actions/cache@v3
+                  coverage: pcov
+            - name: Get Composer Cache Directory
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+            - name: Restore cache
+              uses: actions/cache@v4
               with:
-                  path: ~/.composer/cache/
-                  key: composer-cache
+                path: ${{ steps.composer-cache.outputs.dir }}
+                key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                restore-keys: |
+                  ${{ runner.os }}-composer-
             - name: Install dependencies
-              run: composer install --no-interaction
+              run: composer install --no-interaction ${{ matrix.composer-options }}
             - name: Run php tests
               run: composer run phpunit
             - name: Send coverage
-              uses: codecov/codecov-action@v3
+              uses: codecov/codecov-action@v4
               with:
-                  file: "./build/logs/clover.xml"
+                fail_ci_if_error: ${{ matrix.coverage-required }}
+                flags: php-${{ matrix.php-version }}
+                token: ${{ secrets.CODECOV_TOKEN }}
+                file: ./build/logs/clover.xml
