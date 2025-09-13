@@ -235,6 +235,7 @@ class ResumableTest extends TestCase
     /**
      * @dataProvider fileNameProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('fileNameProvider')]
     public function testResumableSanitizeFileName(string $filename, string $filenameSanitized): void
     {
         $resumableParams = [
@@ -290,9 +291,9 @@ class ResumableTest extends TestCase
     }
 
     /**
-     *
      * @dataProvider isFileUploadCompleteProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('isFileUploadCompleteProvider')]
     public function testIsFileUploadComplete($filename, $identifier, $numOfChunks, $expected): void
     {
         $this->resumable->tempFolder = 'test';
