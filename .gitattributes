@@ -3,3 +3,5 @@
 /.github export-ignore
 /phpcs.xml export-ignore
 /.editorconfig export-ignore
+/test export-ignore
+/phpunit.xml export-ignore
