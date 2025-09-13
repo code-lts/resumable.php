@@ -2,6 +2,7 @@
 
 To use this project we recommend you to use [point cloud technology's fork](https://github.com/pointcloudtechnology/resumable.js) that is a maintained version of the original [resumable.js library](https://github.com/23/resumable.js/tree/master).
 
+Last tested version: [@pointcloudtechnology/resumablejs:4.0.3](https://github.com/pointcloudtechnology/resumable.js/releases/tag/v4.0.3).
 
 ## Installation
 
